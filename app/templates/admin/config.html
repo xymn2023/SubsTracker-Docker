@@ -1,0 +1,530 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}订阅管理 - 系统配置{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">系统配置</h1>
+  <p class="text-gray-600 mt-1">管理通知设置及系统偏好</p>
+</div>
+
+<div class="card p-6 mb-8">
+  <h2 class="text-lg font-semibold text-gray-800 mb-4">通知设置</h2>
+
+  <form id="notificationForm" class="space-y-6">
+    <div class="form-group">
+      <label for="notification_type" class="form-label">通知方式</label>
+      <div class="grid grid-cols-3 gap-4 mt-2">
+        <div 
+          class="notification-type-selector border rounded-lg p-4 cursor-pointer transition-all duration-200" 
+          data-type="telegram"
+          role="button"
+          tabindex="0"
+          aria-label="选择Telegram通知方式">
+          <div class="text-center">
+            <div class="w-12 h-12 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
+              <i class="fab fa-telegram-plane text-xl"></i>
+            </div>
+            <div class="font-medium">Telegram</div>
+          </div>
+        </div>
+
+        <div 
+          class="notification-type-selector border rounded-lg p-4 cursor-pointer transition-all duration-200" 
+          data-type="wecom"
+          role="button"
+          tabindex="0"
+          aria-label="选择企业微信通知方式">
+          <div class="text-center">
+            <div class="w-12 h-12 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
+              <i class="fab fa-weixin text-xl"></i>
+            </div>
+            <div class="font-medium">企业微信</div>
+          </div>
+        </div>
+
+        <div 
+          class="notification-type-selector border rounded-lg p-4 cursor-pointer transition-all duration-200" 
+          data-type="notifyx"
+          role="button"
+          tabindex="0"
+          aria-label="选择NotifyX通知方式">
+          <div class="text-center">
+            <div class="w-12 h-12 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
+              <i class="fas fa-bell text-xl"></i>
+            </div>
+            <div class="font-medium">NotifyX</div>
+          </div>
+        </div>
+      </div>
+      <input type="hidden" id="notification_type" name="notification_type" value="telegram">
+    </div>
+
+    <!-- Telegram 配置 -->
+    <div id="telegram_config" class="notification-config space-y-4">
+      <div class="form-group">
+        <label for="telegram_bot_token" class="form-label">Bot Token</label>
+        <input type="text" id="telegram_bot_token" name="telegram_bot_token" class="form-input" placeholder="例如: 1234567890:ABCDEF-ghijklmnopqrstuvwxyz">
+        <div class="text-gray-500 text-xs mt-1">从 <a href="https://t.me/BotFather" target="_blank" class="text-indigo-600 hover:text-indigo-800">@BotFather</a> 获取 Bot Token</div>
+      </div>
+
+      <div class="form-group">
+        <label for="telegram_chat_id" class="form-label">Chat ID</label>
+        <input type="text" id="telegram_chat_id" name="telegram_chat_id" class="form-input" placeholder="例如: 123456789">
+        <div class="text-gray-500 text-xs mt-1">添加 <a href="https://t.me/userinfobot" target="_blank" class="text-indigo-600 hover:text-indigo-800">@userinfobot</a> 获取您的 Chat ID</div>
+      </div>
+    </div>
+
+    <!-- 企业微信配置 -->
+    <div id="wecom_config" class="notification-config space-y-4 hidden">
+      <div class="form-group">
+        <label for="wecom_corp_id" class="form-label">企业ID (CorpID)</label>
+        <input type="text" id="wecom_corp_id" name="wecom_corp_id" class="form-input" placeholder="企业微信后台查看的企业ID">
+      </div>
+
+      <div class="form-group">
+        <label for="wecom_agent_id" class="form-label">应用ID (AgentID)</label>
+        <input type="text" id="wecom_agent_id" name="wecom_agent_id" class="form-input" placeholder="应用的AgentID">
+      </div>
+
+      <div class="form-group">
+        <label for="wecom_corp_secret" class="form-label">应用密钥 (Secret)</label>
+        <input type="password" id="wecom_corp_secret" name="wecom_corp_secret" class="form-input" placeholder="企业应用的Secret">
+      </div>
+
+      <div class="form-group">
+        <label for="wecom_to_user" class="form-label">接收人</label>
+        <input type="text" id="wecom_to_user" name="wecom_to_user" class="form-input" placeholder="接收人的企业微信ID，多个用|分隔，@all表示所有人">
+        <div class="text-gray-500 text-xs mt-1">例如: UserID1|UserID2 或 @all</div>
+      </div>
+    </div>
+
+    <!-- NotifyX配置 -->
+    <div id="notifyx_config" class="notification-config space-y-4 hidden">
+      <div class="form-group">
+        <label for="notifyx_token" class="form-label">Token</label>
+        <input type="text" id="notifyx_token" name="notifyx_token" class="form-input" placeholder="NotifyX的访问令牌">
+        <div class="text-gray-500 text-xs mt-1">访问 <a href="https://www.notifyx.cn/" target="_blank" class="text-indigo-600 hover:text-indigo-800">NotifyX官网(https://www.notifyx.cn/)</a> 获取Token</div>
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
+      <button type="button" id="testNotification" class="btn btn-warning focus:outline-none w-full sm:w-auto">
+        <i class="fas fa-paper-plane mr-2"></i>发送测试通知
+      </button>
+      <button type="submit" id="saveConfig" class="items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none w-full sm:w-auto">
+        <i class="fas fa-save mr-2"></i>保存配置
+      </button>
+    </div>
+  </form>
+</div>
+
+<div class="card p-6 mb-8">
+  <h2 class="text-lg font-semibold text-gray-800 mb-4">系统设置</h2>
+
+  <form id="systemForm" class="space-y-6">
+    <div class="form-group">
+      <label for="check_frequency" class="form-label">检查频率</label>
+      <select id="check_frequency" name="check_frequency" class="form-input">
+        <option value="daily">每天</option>
+        <option value="weekly">每周</option>
+      </select>
+      <div class="text-gray-500 text-xs mt-1">系统检查即将到期订阅的频率</div>
+    </div>
+
+    <div class="form-group">
+      <label for="reminder_days" class="form-label">提前提醒天数</label>
+      <div class="flex items-center">
+        <input type="number" id="reminder_days" name="reminder_days" min="1" max="30" class="form-input w-24" value="7">
+        <span class="ml-2 text-gray-700">天</span>
+      </div>
+      <div class="text-gray-500 text-xs mt-1">订阅到期前多少天发送提醒通知</div>
+    </div>
+
+    <div class="form-group">
+      <div class="flex items-center">
+        <label for="notifications_enabled" class="flex items-center cursor-pointer">
+          <div class="relative">
+            <input type="checkbox" id="notifications_enabled" name="notifications_enabled" class="sr-only" checked aria-label="启用通知提醒">
+            <div class="toggle-bg w-11 h-6 bg-gray-200 rounded-full border border-gray-200 cursor-pointer transition-all peer"></div>
+            <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-all"></div>
+          </div>
+          <span class="ml-3 text-gray-700">启用通知提醒</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save mr-1"></i>保存设置
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- 测试通知结果模态框 -->
+<div id="notificationResultModal" class="fixed inset-0 flex items-center justify-center z-50 modal-container hidden">
+  <div class="modal-bg fixed inset-0 bg-black opacity-50"></div>
+  <div class="modal-content bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-50">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gray-800">通知测试结果</h3>
+        <button class="text-gray-500 hover:text-gray-700 close-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div id="notificationResultContent" class="py-4"></div>
+
+      <div class="flex justify-end">
+        <button class="btn btn-primary close-modal">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+document.addEventListener("DOMContentLoaded", function() {
+  // 获取配置
+  async function loadConfig() {
+    try {
+      const response = await fetch('/api/config');
+      const config = await response.json();
+
+      // 设置通知方式选择器
+      if (config.NOTIFICATION_TYPE) {
+        document.getElementById('notification_type').value = config.NOTIFICATION_TYPE;
+        document.querySelectorAll('.notification-type-selector').forEach(el => {
+          if (el.dataset.type === config.NOTIFICATION_TYPE) {
+            el.classList.add('border-indigo-500', 'bg-indigo-50');
+          } else {
+            el.classList.remove('border-indigo-500', 'bg-indigo-50');
+          }
+        });
+
+        // 显示对应的配置面板
+        document.querySelectorAll('.notification-config').forEach(el => {
+          el.classList.add('hidden');
+        });
+        document.getElementById(`${config.NOTIFICATION_TYPE}_config`).classList.remove('hidden');
+      }
+
+      // 填充Telegram配置
+      if (config.TELEGRAM_BOT_TOKEN) {
+        document.getElementById('telegram_bot_token').value = config.TELEGRAM_BOT_TOKEN;
+      }
+      if (config.TELEGRAM_CHAT_ID) {
+        document.getElementById('telegram_chat_id').value = config.TELEGRAM_CHAT_ID;
+      }
+
+      // 填充企业微信配置
+      if (config.WECOM_CORP_ID) {
+        document.getElementById('wecom_corp_id').value = config.WECOM_CORP_ID;
+      }
+      if (config.WECOM_AGENT_ID) {
+        document.getElementById('wecom_agent_id').value = config.WECOM_AGENT_ID;
+      }
+      if (config.WECOM_CORP_SECRET) {
+        document.getElementById('wecom_corp_secret').value = config.WECOM_CORP_SECRET;
+      }
+      if (config.WECOM_TO_USER) {
+        document.getElementById('wecom_to_user').value = config.WECOM_TO_USER;
+      }
+
+      // 填充NotifyX配置
+      if (config.NOTIFYX_TOKEN) {
+        document.getElementById('notifyx_token').value = config.NOTIFYX_TOKEN;
+      }
+
+      // 系统配置
+      if (config.CHECK_FREQUENCY) {
+        document.getElementById('check_frequency').value = config.CHECK_FREQUENCY;
+      }
+      if (config.REMINDER_DAYS !== undefined) {
+        document.getElementById('reminder_days').value = config.REMINDER_DAYS;
+      }
+      if (config.NOTIFICATIONS_ENABLED !== undefined) {
+        document.getElementById('notifications_enabled').checked = config.NOTIFICATIONS_ENABLED;
+      }
+
+    } catch (error) {
+      console.error('Error loading config:', error);
+      alert('加载配置失败，请刷新页面重试');
+    }
+  }
+
+  // 通知方式选择器点击事件
+  document.querySelectorAll('.notification-type-selector').forEach(el => {
+    el.addEventListener('click', () => {
+      const type = el.dataset.type;
+
+      // 更新隐藏字段值
+      document.getElementById('notification_type').value = type;
+
+      // 更新选择器样式
+      document.querySelectorAll('.notification-type-selector').forEach(selector => {
+        if (selector.dataset.type === type) {
+          selector.classList.add('border-indigo-500', 'bg-indigo-50');
+        } else {
+          selector.classList.remove('border-indigo-500', 'bg-indigo-50');
+        }
+      });
+
+      // 显示对应的配置面板
+      document.querySelectorAll('.notification-config').forEach(panel => {
+        panel.classList.add('hidden');
+      });
+      document.getElementById(`${type}_config`).classList.remove('hidden');
+    });
+  });
+
+  // 自定义复选框样式
+  const checkbox = document.getElementById('notifications_enabled');
+  const toggleBg = checkbox.nextElementSibling;
+  const dot = toggleBg.nextElementSibling;
+
+  // 初始状态
+  if (checkbox.checked) {
+    toggleBg.classList.add('bg-indigo-600');
+    toggleBg.classList.remove('bg-gray-200');
+    dot.classList.add('translate-x-5');
+  }
+
+  // 点击事件
+  checkbox.addEventListener('change', function() {
+    if (this.checked) {
+      toggleBg.classList.add('bg-indigo-600');
+      toggleBg.classList.remove('bg-gray-200');
+      dot.classList.add('translate-x-5');
+    } else {
+      toggleBg.classList.remove('bg-indigo-600');
+      toggleBg.classList.add('bg-gray-200');
+      dot.classList.remove('translate-x-5');
+    }
+  });
+
+  // 保存通知配置
+  document.getElementById('notificationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const notificationType = document.getElementById('notification_type').value;
+
+    const config = {
+      NOTIFICATION_TYPE: notificationType,
+    };
+
+    // 根据通知类型收集对应的配置
+    if (notificationType === 'telegram') {
+      config.TELEGRAM_BOT_TOKEN = document.getElementById('telegram_bot_token').value.trim();
+      config.TELEGRAM_CHAT_ID = document.getElementById('telegram_chat_id').value.trim();
+    } else if (notificationType === 'wecom') {
+      config.WECOM_CORP_ID = document.getElementById('wecom_corp_id').value;
+      config.WECOM_AGENT_ID = document.getElementById('wecom_agent_id').value;
+      config.WECOM_CORP_SECRET = document.getElementById('wecom_corp_secret').value;
+      config.WECOM_TO_USER = document.getElementById('wecom_to_user').value;
+    } else if (notificationType === 'notifyx') {
+      config.NOTIFYX_TOKEN = document.getElementById('notifyx_token').value;
+    }
+
+    try {
+      const response = await fetch('/api/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(config)
+      });
+
+      if (response.ok) {
+        alert('通知配置保存成功');
+      } else {
+        alert('保存配置失败，请重试');
+      }
+    } catch (error) {
+      console.error('Error saving config:', error);
+      alert('保存配置失败，请重试');
+    }
+  });
+
+  // 保存系统设置
+  document.getElementById('systemForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const config = {
+      CHECK_FREQUENCY: document.getElementById('check_frequency').value,
+      REMINDER_DAYS: parseInt(document.getElementById('reminder_days').value),
+      NOTIFICATIONS_ENABLED: document.getElementById('notifications_enabled').checked
+    };
+
+    try {
+      const response = await fetch('/api/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(config)
+      });
+
+      if (response.ok) {
+        alert('系统设置保存成功');
+      } else {
+        alert('保存设置失败，请重试');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('保存设置失败，请重试');
+    }
+  });
+
+  // 测试通知
+  document.getElementById('testNotification').addEventListener('click', async () => {
+    const notificationType = document.getElementById('notification_type').value;
+    const notificationResultContent = document.getElementById('notificationResultContent');
+
+    // 检查Telegram配置是否完整
+    if (notificationType === 'telegram') {
+      const botToken = document.getElementById('telegram_bot_token').value.trim();
+      const chatId = document.getElementById('telegram_chat_id').value.trim();
+
+      if (!botToken || !chatId) {
+        notificationResultContent.innerHTML = `
+          <div class="text-center">
+            <div class="w-16 h-16 mx-auto mb-4 text-red-500">
+              <i class="fas fa-times-circle text-5xl"></i>
+            </div>
+            <h4 class="text-lg font-medium text-gray-800 mb-2">测试失败</h4>
+            <p class="text-gray-600 mb-2">Telegram配置不完整，请确保填写了Bot Token和Chat ID</p>
+          </div>
+        `;
+        document.getElementById('notificationResultModal').classList.remove('hidden');
+        return;
+      }
+    }
+
+    // 显示加载中提示
+    notificationResultContent.innerHTML = `
+      <div class="text-center">
+        <div class="w-16 h-16 mx-auto mb-4 text-indigo-500">
+          <i class="fas fa-spinner fa-spin text-5xl"></i>
+        </div>
+        <h4 class="text-lg font-medium text-gray-800 mb-2">发送中...</h4>
+        <p class="text-gray-600">正在发送测试通知，请稍候...</p>
+      </div>
+    `;
+
+    // 显示模态框
+    document.getElementById('notificationResultModal').classList.remove('hidden');
+
+    try {
+      // 首先保存配置
+      const saveConfig = async () => {
+        const config = { NOTIFICATION_TYPE: notificationType };
+
+        if (notificationType === 'telegram') {
+          config.TELEGRAM_BOT_TOKEN = document.getElementById('telegram_bot_token').value.trim();
+          config.TELEGRAM_CHAT_ID = document.getElementById('telegram_chat_id').value.trim();
+        } else if (notificationType === 'wecom') {
+          config.WECOM_CORP_ID = document.getElementById('wecom_corp_id').value.trim();
+          config.WECOM_AGENT_ID = document.getElementById('wecom_agent_id').value.trim();
+          config.WECOM_CORP_SECRET = document.getElementById('wecom_corp_secret').value.trim();
+          config.WECOM_TO_USER = document.getElementById('wecom_to_user').value.trim();
+        } else if (notificationType === 'notifyx') {
+          config.NOTIFYX_TOKEN = document.getElementById('notifyx_token').value.trim();
+        }
+
+        const response = await fetch('/api/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+          throw new Error('保存配置失败');
+        }
+
+        // 等待一小段时间确保配置已保存
+        return new Promise(resolve => setTimeout(resolve, 500));
+      };
+
+      // 保存配置并等待完成
+      await saveConfig();
+
+      // 发送测试通知
+      const response = await fetch('/api/test-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          notification_type: notificationType,
+          test: true  // 添加测试标志
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`服务器响应错误: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      // 在控制台输出详细信息
+      console.log('测试通知结果:', result);
+
+      // 显示测试结果
+      if (result.success) {
+        notificationResultContent.innerHTML = `
+          <div class="text-center">
+            <div class="w-16 h-16 mx-auto mb-4 text-green-500">
+              <i class="fas fa-check-circle text-5xl"></i>
+            </div>
+            <h4 class="text-lg font-medium text-gray-800 mb-2">测试成功</h4>
+            <p class="text-gray-600">通知已成功发送，请检查您的消息接收情况。</p>
+          </div>
+        `;
+      } else {
+        // 提取并显示详细错误信息
+        const errorMessage = result.message || '发送测试通知失败，请检查通知配置';
+        
+        notificationResultContent.innerHTML = `
+          <div class="text-center">
+            <div class="w-16 h-16 mx-auto mb-4 text-red-500">
+              <i class="fas fa-times-circle text-5xl"></i>
+            </div>
+            <h4 class="text-lg font-medium text-gray-800 mb-2">测试失败</h4>
+            <p class="text-gray-600 mb-2">${errorMessage}</p>
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error('Error testing notification:', error);
+
+      notificationResultContent.innerHTML = `
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-4 text-red-500">
+            <i class="fas fa-times-circle text-5xl"></i>
+          </div>
+          <h4 class="text-lg font-medium text-gray-800 mb-2">测试失败</h4>
+          <p class="text-gray-600 mb-2">发送测试通知时出现错误: ${error.message}</p>
+        </div>
+      `;
+    }
+  });
+
+  // 关闭模态框
+  document.querySelectorAll('.close-modal').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.modal-container').forEach(modal => {
+        modal.classList.add('hidden');
+      });
+    });
+  });
+
+  // 初始化加载配置
+  loadConfig();
+});
+{% endblock %} 

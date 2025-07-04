@@ -1,0 +1,704 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}订阅列表 - 订阅管理系统{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">订阅管理</h1>
+  <div class="flex space-x-3">
+    <button id="templateBtn" class="btn bg-indigo-100 text-indigo-700 hover:bg-indigo-200">
+      <i class="fas fa-list-alt mr-1"></i>
+      订阅模板
+    </button>
+    <button id="addSubscriptionBtn" class="btn btn-primary">
+      <i class="fas fa-plus mr-1"></i>
+      添加订阅
+    </button>
+  </div>
+</div>
+
+<div class="card p-6 mb-8">
+  {% if subscriptions %}
+  <div class="table-container">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">价格</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">周期</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">到期日</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for sub in subscriptions %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="font-medium text-gray-900">{{ sub.name }}</div>
+            {% if sub.description %}
+            <div class="text-sm text-gray-500">{{ sub.description }}</div>
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-gray-900">¥{{ sub.amount }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-gray-900">{{ sub.period_unit_label }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-gray-900">{{ sub.expiry_date }}</div>
+            {% if sub.days_left is defined %}
+            <div class="text-sm {{ 'text-red-500' if sub.days_left < 7 else 'text-gray-500' }}">
+              {% if sub.days_left <= 0 %}
+              已过期
+              {% else %}
+              还剩 {{ sub.days_left }} 天
+              {% endif %}
+            </div>
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            {% if sub.days_left is defined and sub.days_left <= 0 %}
+            <span class="badge badge-danger">
+              <i class="fas fa-exclamation-circle mr-1"></i>已过期
+            </span>
+            {% elif sub.days_left is defined and sub.days_left <= 7 %}
+            <span class="badge badge-warning">
+              <i class="fas fa-exclamation-triangle mr-1"></i>即将到期
+            </span>
+            {% else %}
+            <span class="badge badge-success">
+              <i class="fas fa-check-circle mr-1"></i>活跃
+            </span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="action-buttons">
+              <button class="btn btn-warning btn-sm edit-subscription" data-id="{{ sub.id }}">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-danger btn-sm delete-subscription" data-id="{{ sub.id }}">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state fade-in">
+    <div class="empty-state-icon">
+      <i class="fas fa-calendar-alt"></i>
+    </div>
+    <h3 class="empty-state-title">暂无订阅数据</h3>
+    <p class="empty-state-description">您还没有添加任何订阅项目。点击"添加订阅"按钮开始管理您的订阅。</p>
+    <button id="emptyStateAddBtn" class="btn btn-primary">
+      <i class="fas fa-plus mr-1"></i>
+      添加订阅
+    </button>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- 添加/编辑订阅模态框 -->
+<div id="subscriptionModal" class="fixed inset-0 flex items-center justify-center z-50 modal-container hidden">
+  <div class="modal-bg fixed inset-0 bg-black opacity-50"></div>
+  <div class="modal-content bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 z-50 max-h-screen overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gray-800" id="modalTitle">添加订阅</h3>
+        <button class="text-gray-500 hover:text-gray-700 close-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form id="subscriptionForm" class="space-y-4">
+        <input type="hidden" id="subscriptionId" value="">
+        
+        <div class="form-group">
+          <label for="name" class="form-label required">订阅名称</label>
+          <input type="text" id="name" name="name" class="form-input" required placeholder="例如：Netflix会员">
+          <div class="text-red-500 text-sm hidden" id="nameError"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="description" class="form-label">描述</label>
+          <textarea id="description" name="description" class="form-input" rows="2" placeholder="可选：添加关于此订阅的备注"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="amount" class="form-label required">价格</label>
+          <div class="price-input-wrapper">
+            <span class="currency-symbol">¥</span>
+            <input type="number" id="amount" name="amount" class="form-input" required min="0" step="0.01" placeholder="0.00">
+          </div>
+          <div class="text-red-500 text-sm hidden" id="amountError"></div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label for="period_value" class="form-label required">周期</label>
+            <input type="number" id="period_value" name="period_value" class="form-input" required min="1" placeholder="1">
+            <div class="text-red-500 text-sm hidden" id="periodValueError"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="period_unit" class="form-label required">周期单位</label>
+            <select id="period_unit" name="period_unit" class="form-input" required>
+              <option value="month">月</option>
+              <option value="year">年</option>
+              <option value="day">天</option>
+              <option value="week">周</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="start_date" class="form-label required">开始日期</label>
+          <input type="date" id="start_date" name="start_date" class="form-input" required>
+          <div class="text-red-500 text-sm hidden" id="startDateError"></div>
+        </div>
+        
+        <div class="form-group flex items-center">
+          <div class="flex items-center">
+            <label for="recurring" class="flex items-center cursor-pointer mr-3">
+              <div class="relative">
+                <input type="checkbox" id="recurring" name="recurring" class="sr-only" checked aria-label="循环订阅（到期后自动续期）">
+                <div class="toggle-bg w-11 h-6 bg-gray-200 rounded-full border border-gray-200 cursor-pointer transition-all"></div>
+                <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-all"></div>
+              </div>
+            </label>
+            <span class="text-gray-700">循环订阅（到期后自动续期）</span>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6">
+          <button type="button" class="btn bg-gray-200 text-gray-700 hover:bg-gray-300 close-modal">取消</button>
+          <button type="submit" id="saveSubscription" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div id="deleteModal" class="fixed inset-0 flex items-center justify-center z-50 modal-container hidden">
+  <div class="modal-bg fixed inset-0 bg-black opacity-50"></div>
+  <div class="modal-content bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-50">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gray-800">确认删除</h3>
+        <button class="text-gray-500 hover:text-gray-700 close-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <p class="text-gray-700 mb-4">确定要删除此订阅吗？此操作无法撤销。</p>
+      <div class="flex justify-end space-x-3">
+        <button class="btn bg-gray-200 text-gray-700 hover:bg-gray-300 close-modal">取消</button>
+        <button id="confirmDelete" class="btn btn-danger">删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 模板选择模态框 -->
+<div id="templateModal" class="fixed inset-0 flex items-center justify-center z-50 modal-container hidden">
+  <div class="modal-bg fixed inset-0 bg-black opacity-50"></div>
+  <div class="modal-content bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 z-50 max-h-90vh overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-gray-800">选择订阅模板</h3>
+        <button class="text-gray-500 hover:text-gray-700 close-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="mb-4">
+        <input type="text" id="templateSearch" placeholder="搜索模板..." class="form-input w-full" />
+      </div>
+      
+      <div id="templateList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- 模板列表将通过JS加载 -->
+      </div>
+      
+      <div class="mt-6 text-center text-gray-500 text-sm">
+        选择一个模板快速创建订阅，您可以在创建后修改详细信息。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 测试通知结果模态框 -->
+<div id="notificationResultModal" class="fixed inset-0 flex items-center justify-center z-50 modal-container hidden">
+  <div class="modal-bg fixed inset-0 bg-black opacity-50"></div>
+  <div class="modal-content bg-white rounded-lg shadow-xl max-w-md w-full mx-4 z-50">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gray-800">通知测试结果</h3>
+        <button class="text-gray-500 hover:text-gray-700 close-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div id="notificationResultContent" class="py-4"></div>
+      
+      <div class="flex justify-end">
+        <button class="btn btn-primary close-modal">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+document.addEventListener("DOMContentLoaded", function() {
+  const subscriptionModal = document.getElementById('subscriptionModal');
+  const deleteModal = document.getElementById('deleteModal');
+  const subscriptionForm = document.getElementById('subscriptionForm');
+  const addSubscriptionBtn = document.getElementById('addSubscriptionBtn');
+  const emptyStateAddBtn = document.getElementById('emptyStateAddBtn');
+  const closeModalBtns = document.querySelectorAll('.close-modal');
+  let deletingId = null;
+
+  // 表单校验
+  function validateForm() {
+    let isValid = true;
+    const name = document.getElementById('name');
+    const amount = document.getElementById('amount');
+    const period = document.getElementById('period_value');
+    const startDate = document.getElementById('start_date');
+    
+    // 名称验证
+    if (!name.value.trim()) {
+      document.getElementById('nameError').textContent = '订阅名称不能为空';
+      document.getElementById('nameError').classList.remove('hidden');
+      isValid = false;
+    } else {
+      document.getElementById('nameError').classList.add('hidden');
+    }
+    
+    // 价格验证
+    if (!amount.value || parseFloat(amount.value) < 0) {
+      document.getElementById('amountError').textContent = '请输入有效的价格';
+      document.getElementById('amountError').classList.remove('hidden');
+      isValid = false;
+    } else {
+      document.getElementById('amountError').classList.add('hidden');
+    }
+    
+    // 周期验证
+    if (!period.value || parseInt(period.value) < 1) {
+      document.getElementById('periodValueError').textContent = '请输入有效的周期';
+      document.getElementById('periodValueError').classList.remove('hidden');
+      isValid = false;
+    } else {
+      document.getElementById('periodValueError').classList.add('hidden');
+    }
+    
+    // 日期验证
+    if (!startDate.value) {
+      document.getElementById('startDateError').textContent = '请选择开始日期';
+      document.getElementById('startDateError').classList.remove('hidden');
+      isValid = false;
+    } else {
+      document.getElementById('startDateError').classList.add('hidden');
+    }
+    
+    return isValid;
+  }
+
+  // 显示模态框
+  function showModal(modal) {
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  }
+
+  // 隐藏模态框
+  function hideModal(modal) {
+    modal.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+  }
+
+  // 重置表单
+  function resetForm() {
+    subscriptionForm.reset();
+    document.getElementById('subscriptionId').value = '';
+    document.getElementById('modalTitle').textContent = '添加订阅';
+    // 隐藏所有错误提示
+    document.querySelectorAll('.text-red-500').forEach(el => el.classList.add('hidden'));
+    
+    // 设置当前日期为默认值
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    document.getElementById('start_date').value = formattedDate;
+  }
+
+  // 添加订阅按钮点击事件
+  if (addSubscriptionBtn) {
+    addSubscriptionBtn.addEventListener('click', () => {
+      resetForm();
+      showModal(subscriptionModal);
+    });
+  }
+
+  // 空状态添加按钮
+  if (emptyStateAddBtn) {
+    emptyStateAddBtn.addEventListener('click', () => {
+      resetForm();
+      showModal(subscriptionModal);
+    });
+  }
+
+  // 关闭模态框按钮点击事件
+  closeModalBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      hideModal(btn.closest('.modal-container'));
+    });
+  });
+
+  // 点击模态框背景关闭模态框
+  document.querySelectorAll('.modal-bg').forEach(bg => {
+    bg.addEventListener('click', () => {
+      hideModal(bg.parentElement);
+    });
+  });
+
+  // 编辑订阅按钮点击事件
+  document.querySelectorAll('.edit-subscription').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      
+      try {
+        const response = await fetch(`/api/subscriptions/${id}`);
+        if (response.ok) {
+          const subscription = await response.json();
+          
+          document.getElementById('subscriptionId').value = subscription.id;
+          document.getElementById('name').value = subscription.name;
+          document.getElementById('description').value = subscription.description || '';
+          document.getElementById('amount').value = subscription.amount;
+          document.getElementById('period_value').value = subscription.period;
+          document.getElementById('period_unit').value = subscription.period_unit;
+          document.getElementById('start_date').value = subscription.start_date;
+          
+          document.getElementById('modalTitle').textContent = '编辑订阅';
+          showModal(subscriptionModal);
+        } else {
+          alert('获取订阅数据失败');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('获取订阅数据时出错');
+      }
+    });
+  });
+
+  // 删除订阅按钮点击事件
+  document.querySelectorAll('.delete-subscription').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deletingId = btn.dataset.id;
+      showModal(deleteModal);
+    });
+  });
+
+  // 确认删除按钮点击事件
+  if (document.getElementById('confirmDelete')) {
+    document.getElementById('confirmDelete').addEventListener('click', async () => {
+      if (!deletingId) return;
+      
+      try {
+        const response = await fetch(`/api/subscriptions/${deletingId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          hideModal(deleteModal);
+          window.location.reload();
+        } else {
+          alert('删除订阅失败');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('删除订阅时出错');
+      }
+    });
+  }
+
+  // 表单提交事件
+  subscriptionForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    const subscriptionId = document.getElementById('subscriptionId').value;
+    const isEdit = !!subscriptionId;
+    
+    const subscription = {
+      name: document.getElementById('name').value,
+      description: document.getElementById('description').value,
+      amount: parseFloat(document.getElementById('amount').value),
+      period_value: parseInt(document.getElementById('period_value').value),
+      period_unit: document.getElementById('period_unit').value,
+      start_date: document.getElementById('start_date').value,
+      recurring: document.getElementById('recurring').checked
+    };
+    
+    try {
+      const url = isEdit ? `/api/subscriptions/${subscriptionId}` : '/api/subscriptions';
+      const method = isEdit ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(subscription)
+      });
+      
+      if (response.ok) {
+        hideModal(subscriptionModal);
+        window.location.reload();
+      } else {
+        const data = await response.json();
+        alert(data.message || '保存订阅失败');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('保存订阅时出错');
+    }
+  });
+
+  // 初始化表单日期默认值
+  const today = new Date();
+  const formattedDate = today.toISOString().split('T')[0];
+  document.getElementById('start_date').value = formattedDate;
+
+  // 加载订阅模板
+  async function loadTemplates() {
+    try {
+      const response = await fetch('/api/subscription-templates');
+      if (response.ok) {
+        const templates = await response.json();
+        renderTemplates(templates);
+      } else {
+        console.error('Failed to load templates');
+      }
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    }
+  }
+
+  // 渲染模板列表
+  function renderTemplates(templates) {
+    const templateList = document.getElementById('templateList');
+    templateList.innerHTML = '';
+    
+    // 软件图标映射
+    const iconMap = {
+      'Netflix': 'fa-solid fa-film',
+      'Spotify': 'fab fa-spotify',
+      'Apple Music': 'fab fa-apple',
+      '哔哩哔哩': 'fa-solid fa-play',
+      '爱奇艺': 'fa-solid fa-video',
+      '腾讯视频': 'fa-solid fa-tv',
+      '网易云音乐': 'fa-solid fa-music',
+      '微软': 'fab fa-microsoft',
+      'Office': 'fa-solid fa-file-word',
+      'Adobe': 'fab fa-adobe',
+      'GitHub': 'fab fa-github',
+      'JetBrains': 'fa-solid fa-code'
+    };
+    
+    // 获取图标
+    function getIcon(name) {
+      for (const [key, icon] of Object.entries(iconMap)) {
+        if (name.includes(key)) return icon;
+      }
+      return 'fa-solid fa-tag';
+    }
+    
+    templates.forEach(template => {
+      const templateCard = document.createElement('div');
+      templateCard.className = 'card p-4 cursor-pointer hover:shadow-md transition-all duration-200';
+      
+      const icon = getIcon(template.name);
+      templateCard.innerHTML = `
+        <div class="flex items-center mb-2">
+          <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
+            <i class="${icon} text-indigo-600"></i>
+          </div>
+          <div>
+            <div class="font-medium text-gray-800">${template.name}</div>
+            <div class="text-sm text-gray-600">${template.description || ''}</div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center mt-3">
+          <div class="text-indigo-600 font-medium">¥${template.amount}</div>
+          <div class="text-gray-500 text-sm">${template.period_value} ${getPeriodLabel(template.period_unit)}</div>
+        </div>
+      `;
+      
+      templateCard.addEventListener('click', () => {
+        selectTemplate(template);
+      });
+      
+      templateList.appendChild(templateCard);
+    });
+  }
+
+  // 获取周期单位标签
+  function getPeriodLabel(unit) {
+    const labels = {
+      'day': '天',
+      'week': '周',
+      'month': '月',
+      'year': '年'
+    };
+    return labels[unit] || unit;
+  }
+
+  // 选择模板
+  function selectTemplate(template) {
+    // 隐藏模板模态框
+    document.getElementById('templateModal').classList.add('hidden');
+    
+    // 打开订阅表单
+    resetForm();
+    document.getElementById('name').value = template.name;
+    document.getElementById('description').value = template.description || '';
+    document.getElementById('amount').value = template.amount;
+    document.getElementById('period_value').value = template.period;
+    document.getElementById('period_unit').value = template.period_unit;
+    
+    showModal(subscriptionModal);
+  }
+
+  // 打开模板模态框按钮
+  document.getElementById('templateBtn').addEventListener('click', () => {
+    loadTemplates();
+    document.getElementById('templateModal').classList.remove('hidden');
+  });
+
+  // 模板搜索功能
+  document.getElementById('templateSearch').addEventListener('input', async function() {
+    const searchTerm = this.value.toLowerCase();
+    const response = await fetch('/api/subscription-templates');
+    if (response.ok) {
+      let templates = await response.json();
+      
+      if (searchTerm) {
+        templates = templates.filter(template => 
+          template.name.toLowerCase().includes(searchTerm) || 
+          (template.description && template.description.toLowerCase().includes(searchTerm))
+        );
+      }
+      
+      renderTemplates(templates);
+    }
+  });
+
+  // 自定义复选框样式
+  const checkbox = document.getElementById('recurring');
+  const toggleBg = checkbox.nextElementSibling;
+  const dot = toggleBg.nextElementSibling;
+  
+  // 初始状态
+  if (checkbox.checked) {
+    toggleBg.classList.add('bg-indigo-600');
+    toggleBg.classList.remove('bg-gray-200');
+    dot.classList.add('translate-x-5');
+  }
+  
+  // 点击事件
+  checkbox.addEventListener('change', function() {
+    if (this.checked) {
+      toggleBg.classList.add('bg-indigo-600');
+      toggleBg.classList.remove('bg-gray-200');
+      dot.classList.add('translate-x-5');
+    } else {
+      toggleBg.classList.remove('bg-indigo-600');
+      toggleBg.classList.add('bg-gray-200');
+      dot.classList.remove('translate-x-5');
+    }
+  });
+
+  // 测试通知功能
+  // document.getElementById('testNotificationBtn').addEventListener('click', async () => {
+  //   try {
+  //     // 显示加载状态
+  //     const button = document.getElementById('testNotificationBtn');
+  //     const originalContent = button.innerHTML;
+  //     button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>发送中...';
+  //     button.disabled = true;
+      
+  //     // 显示结果模态框并添加加载中提示
+  //     const notificationResultContent = document.getElementById('notificationResultContent');
+  //     notificationResultContent.innerHTML = `
+  //       <div class="text-center">
+  //         <div class="w-16 h-16 mx-auto mb-4 text-indigo-500">
+  //           <i class="fas fa-spinner fa-spin text-5xl"></i>
+  //         </div>
+  //         <h4 class="text-lg font-medium text-gray-800 mb-2">发送中...</h4>
+  //         <p class="text-gray-600">正在发送测试通知，请稍候...</p>
+  //       </div>
+  //     `;
+  //     document.getElementById('notificationResultModal').classList.remove('hidden');
+      
+  //     const response = await fetch('/api/test-notification', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       },
+  //       body: JSON.stringify({})
+  //     });
+      
+  //     const result = await response.json();
+      
+  //     // 显示结果
+  //     if (result.success) {
+  //       notificationResultContent.innerHTML = `
+  //         <div class="text-center">
+  //           <div class="w-16 h-16 mx-auto mb-4 text-green-500">
+  //             <i class="fas fa-check-circle text-5xl"></i>
+  //           </div>
+  //           <h4 class="text-lg font-medium text-gray-800 mb-2">测试成功</h4>
+  //           <p class="text-gray-600">通知已成功发送，请检查您的接收设备。</p>
+  //         </div>
+  //       `;
+  //     } else {
+  //       notificationResultContent.innerHTML = `
+  //         <div class="text-center">
+  //           <div class="w-16 h-16 mx-auto mb-4 text-red-500">
+  //             <i class="fas fa-times-circle text-5xl"></i>
+  //           </div>
+  //           <h4 class="text-lg font-medium text-gray-800 mb-2">测试失败</h4>
+  //           <p class="text-gray-600 mb-2">${result.message || '发送测试通知失败，请检查通知配置'}</p>
+  //         </div>
+  //       `;
+  //     }
+  //   } catch (error) {
+  //     console.error('测试通知失败:', error);
+  //     document.getElementById('notificationResultContent').innerHTML = `
+  //       <div class="text-center">
+  //         <div class="w-16 h-16 mx-auto mb-4 text-red-500">
+  //           <i class="fas fa-times-circle text-5xl"></i>
+  //         </div>
+  //         <h4 class="text-lg font-medium text-gray-800 mb-2">测试失败</h4>
+  //         <p class="text-gray-600 mb-2">发送测试通知时出现错误，请检查网络连接和通知配置</p>
+  //       </div>
+  //     `;
+  //   } finally {
+  //     // 恢复按钮状态
+  //     // const button = document.getElementById('testNotificationBtn');
+  //     // button.innerHTML = '<i class="fas fa-bell mr-2"></i>测试通知';
+  //     // button.disabled = false;
+  //   }
+  // });
+});
+{% endblock %} 

@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  subscription-manager:
+    build: .
+    container_name: subscription-manager
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=Asia/Shanghai
+      - SECRET_KEY=your-secret-key-change-this
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=password
+      # 通知方式: telegram, wecom, notifyx
+      - NOTIFICATION_TYPE=telegram
+      # Telegram配置
+      - TG_BOT_TOKEN=
+      - TG_CHAT_ID=
+      # 企业微信配置
+      - WECOM_CORP_ID=
+      - WECOM_AGENT_ID=
+      - WECOM_CORP_SECRET=
+      # NotifyX配置
+      - NOTIFYX_API_KEY=
+    command: gunicorn --bind 0.0.0.0:5000 run:app 
