@@ -35,6 +35,8 @@ docker-compose up -d
 - 用户名：admin
 - 密码：password
 
+旧地址：[SubsTracker](https://github.com/xymn2023/SubsTracker)
+
 ### 手动部署
 
 1. 克隆仓库：
