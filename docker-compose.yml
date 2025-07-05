@@ -1,9 +1,9 @@
 version: '3'
 
 services:
-  subscription-manager:
-    build: .
-    container_name: subscription-manager
+  substracker:
+    image: smhw3565/substracker:sub
+    container_name: substracker
     restart: always
     ports:
       - "5000:5000"
