@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.models.subscription import Subscription
 
 def get_subscriptions_path():
@@ -251,6 +251,114 @@ def get_subscription_statistics():
         "active_count": active_count
     }
 
+def test_subscription(subscription_data):
+    """测试订阅配置"""
+    try:
+        # 创建临时订阅对象进行测试
+        test_subscription = Subscription.from_dict(subscription_data)
+        
+        # 验证基本信息
+        validation_results = {
+            "success": True,
+            "errors": [],
+            "warnings": [],
+            "info": {}
+        }
+        
+        # 检查必填字段
+        if not test_subscription.name or not test_subscription.name.strip():
+            validation_results["errors"].append("订阅名称不能为空")
+            validation_results["success"] = False
+        
+        if not test_subscription.start_date:
+            validation_results["errors"].append("开始日期不能为空")
+            validation_results["success"] = False
+        
+        if not test_subscription.period_value or test_subscription.period_value <= 0:
+            validation_results["errors"].append("周期值必须大于0")
+            validation_results["success"] = False
+        
+        if not test_subscription.period_unit:
+            validation_results["errors"].append("周期单位不能为空")
+            validation_results["success"] = False
+        
+        # 检查价格
+        if test_subscription.amount is None or test_subscription.amount < 0:
+            validation_results["errors"].append("价格不能为负数")
+            validation_results["success"] = False
+        
+        # 验证日期格式和逻辑
+        if test_subscription.start_date:
+            try:
+                start_date = datetime.fromisoformat(test_subscription.start_date.replace('Z', '+00:00'))
+                validation_results["info"]["start_date"] = start_date.strftime('%Y-%m-%d')
+                
+                # 检查开始日期是否合理
+                now = datetime.now()
+                if start_date > now + timedelta(days=365):
+                    validation_results["warnings"].append("开始日期设置在未来一年后，请确认是否正确")
+                
+            except ValueError:
+                validation_results["errors"].append("开始日期格式不正确")
+                validation_results["success"] = False
+        
+        # 计算到期日期
+        if validation_results["success"]:
+            try:
+                expiry_date = test_subscription.calculate_expiry_date()
+                if expiry_date:
+                    expiry_datetime = datetime.fromisoformat(expiry_date.replace('Z', '+00:00'))
+                    validation_results["info"]["expiry_date"] = expiry_datetime.strftime('%Y-%m-%d')
+                    
+                    # 计算剩余天数
+                    days_remaining = test_subscription.days_remaining()
+                    validation_results["info"]["days_remaining"] = days_remaining
+                    
+                    # 检查到期日期是否合理
+                    if days_remaining < -365:
+                        validation_results["warnings"].append("订阅已过期超过一年，请检查开始日期设置")
+                    elif days_remaining < 0:
+                        validation_results["warnings"].append("订阅已过期，但设置了自动续期")
+                    
+                else:
+                    validation_results["errors"].append("无法计算到期日期")
+                    validation_results["success"] = False
+                    
+            except Exception as e:
+                validation_results["errors"].append(f"计算到期日期时出错: {str(e)}")
+                validation_results["success"] = False
+        
+        # 计算费用信息
+        if test_subscription.amount and test_subscription.amount > 0:
+            # 计算月均费用
+            monthly_cost = test_subscription.amount
+            if test_subscription.period_unit == "year":
+                monthly_cost = test_subscription.amount / 12
+            elif test_subscription.period_unit == "day":
+                monthly_cost = test_subscription.amount * 30  # 假设每月30天
+            elif test_subscription.period_unit == "week":
+                monthly_cost = test_subscription.amount * 4.33  # 假设每月4.33周
+            
+            validation_results["info"]["monthly_cost"] = round(monthly_cost, 2)
+            validation_results["info"]["yearly_cost"] = round(monthly_cost * 12, 2)
+        
+        # 检查提醒设置
+        if test_subscription.reminder_days:
+            if test_subscription.reminder_days < 0:
+                validation_results["warnings"].append("提醒天数设置为负数，将不会收到提醒")
+            elif test_subscription.reminder_days > 365:
+                validation_results["warnings"].append("提醒天数设置超过一年，建议设置为7-30天")
+        
+        return validation_results
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "errors": [f"测试订阅时出错: {str(e)}"],
+            "warnings": [],
+            "info": {}
+        }
+
 # 添加SubscriptionService类，包装现有功能
 class SubscriptionService:
     """订阅服务类，封装订阅相关操作"""
@@ -283,4 +391,8 @@ class SubscriptionService:
     
     def get_subscription_statistics(self):
         """获取订阅统计信息"""
-        return get_subscription_statistics() 
+        return get_subscription_statistics()
+    
+    def test_subscription(self, subscription_data):
+        """测试订阅配置"""
+        return test_subscription(subscription_data) 

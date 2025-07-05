@@ -312,3 +312,48 @@ def get_statistics():
 def get_subscription_templates():
     """获取订阅模板列表"""
     return jsonify(SUBSCRIPTION_TEMPLATES)
+
+@api_bp.route('/test-subscription', methods=['POST'])
+@login_required
+def test_subscription_api():
+    """测试订阅配置"""
+    try:
+        subscription_data = request.json
+        if not subscription_data:
+            return jsonify({
+                "success": False,
+                "message": "请提供订阅数据"
+            }), 400
+        
+        # 导入测试函数
+        from app.services.subscription_service import test_subscription
+        
+        # 执行测试
+        result = test_subscription(subscription_data)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"测试订阅失败: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"测试订阅失败: {str(e)}"
+        }), 500
+
+@api_bp.route('/test-subscription-notify/<subscription_id>', methods=['POST'])
+@login_required
+def test_subscription_notify(subscription_id):
+    from app.services.subscription_service import get_subscription
+    from app.services.notification_service import send_notification
+
+    subscription = get_subscription(subscription_id)
+    if not subscription:
+        return jsonify({"success": False, "message": "订阅不存在"}), 404
+
+    # 组装推送内容
+    message = f"""*订阅推送测试*\n\n名称：{subscription.name}\n到期日：{subscription.expiry_date}\n金额：¥{subscription.amount}\n\n本消息用于测试订阅推送功能。"""
+    success, error_msg = send_notification(message)
+    return jsonify({
+        "success": success,
+        "message": "推送成功" if success else f"推送失败: {error_msg}"
+    })

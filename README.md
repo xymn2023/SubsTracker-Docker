@@ -7,7 +7,7 @@
 - 订阅管理：添加、编辑、删除和查看订阅
 - 费用统计：统计订阅的费用支出，生成图表展示
 - 到期提醒：自动检查即将到期的订阅并发送通知
-  - 支持多种通知方式：Telegram、企业微信、NotifyX
+- 支持多种通知方式：Telegram、企业微信、NotifyX
 - Docker支持：提供Docker部署方案，方便快速部署
 
 ## 安装部署
@@ -17,14 +17,14 @@
 1. 克隆仓库：
 
 ```bash
-git clone https://github.com/yourusername/subscription-manager.git
-cd subscription-manager
+git clone https://github.com/xymn2023/SubsTracker-Docker
+cd SubsTracker-Docker
 ```
 
 2. 使用docker-compose启动服务：
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 3. 访问系统：
@@ -35,13 +35,15 @@ docker-compose up -d
 - 用户名：admin
 - 密码：password
 
+旧地址：[SubsTracker](https://github.com/xymn2023/SubsTracker)
+
 ### 手动部署
 
 1. 克隆仓库：
 
 ```bash
-git clone https://github.com/yourusername/subscription-manager.git
-cd subscription-manager
+git clone https://github.com/xymn2023/SubsTracker-Docker
+cd SubsTracker-Docker
 ```
 
 2. 创建虚拟环境并安装依赖：

@@ -6,7 +6,7 @@
   <title>{% block title %}订阅管理系统{% endblock %}</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <style>
     /* 全局样式 */
@@ -73,30 +73,57 @@
     }
 
     .btn-danger {
-      background: linear-gradient(90deg, #ef4444, #dc2626);
-      color: white;
+      background: #F44336;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1.2rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      transition: background 0.2s;
     }
 
-    .btn-danger:hover {
-      box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.5);
+    .btn-danger:hover, .btn-danger:focus {
+      background: #c62828;
+      color: #fff;
     }
 
     .btn-warning {
-      background: linear-gradient(90deg, #f59e0b, #d97706);
-      color: white;
+      background: #FFA726;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1.2rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      transition: background 0.2s;
     }
 
-    .btn-warning:hover {
-      box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.5);
+    .btn-warning:hover, .btn-warning:focus {
+      background: #fb8c00;
+      color: #fff;
     }
 
     .btn-success {
-      background: linear-gradient(90deg, #10b981, #059669);
-      color: white;
+      background: #43A047;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1.2rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      transition: background 0.2s;
     }
 
-    .btn-success:hover {
-      box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.5);
+    .btn-success:hover, .btn-success:focus {
+      background: #2e7031;
+      color: #fff;
     }
 
     /* 移除按钮焦点时的虚线边框 */
@@ -356,6 +383,62 @@
 
     .price-input-wrapper input {
       padding-left: 1.75rem;
+    }
+
+    .btn-edit {
+      background: #6C63FF;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1.2rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      transition: background 0.2s;
+    }
+
+    .btn-edit:hover, .btn-edit:focus {
+      background: #554ee0;
+      color: #fff;
+    }
+
+    .btn-test {
+      background: #1976D2;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1.2rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      transition: background 0.2s;
+    }
+
+    .btn-test:hover, .btn-test:focus {
+      background: #115293;
+      color: #fff;
+    }
+
+    .test-icon {
+      font-size: 1.2em;
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: inline-block !important;
+      transition: none !important;
+    }
+
+    .subscription-type-icon {
+      color: #333 !important;
+    }
+
+    .action-buttons > .btn {
+      margin-right: 0.5em;
+    }
+
+    .action-buttons > .btn:last-child {
+      margin-right: 0;
     }
 
     {% block additional_css %}{% endblock %}

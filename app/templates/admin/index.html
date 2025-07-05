@@ -74,13 +74,25 @@
             {% endif %}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="action-buttons">
-              <button class="btn btn-warning btn-sm edit-subscription" data-id="{{ sub.id }}">
-                <i class="fas fa-edit"></i>
+            <div class="action-buttons flex space-x-2">
+              <button class="btn btn-edit btn-sm edit-subscription" data-id="{{ sub.id }}">
+                <i class="fas fa-edit"></i> 编辑
+              </button>
+              <button class="btn btn-test btn-sm test-subscription" data-id="{{ sub.id }}">
+                <i class="test-icon"></i> 测试
               </button>
               <button class="btn btn-danger btn-sm delete-subscription" data-id="{{ sub.id }}">
-                <i class="fas fa-trash-alt"></i>
+                <i class="fas fa-trash-alt"></i> 删除
               </button>
+              {% if sub.is_active %}
+              <button class="btn btn-warning btn-sm toggle-status-subscription" data-id="{{ sub.id }}" data-status="disable">
+                <i class="fas fa-pause"></i> 停用
+              </button>
+              {% else %}
+              <button class="btn btn-success btn-sm toggle-status-subscription" data-id="{{ sub.id }}" data-status="enable">
+                <i class="fas fa-play"></i> 启用
+              </button>
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -252,6 +264,30 @@
     </div>
   </div>
 </div>
+
+<!-- 订阅测试结果模态框 -->
+<div id="subscriptionTestModal" class="fixed inset-0 flex items-center justify-center z-50 modal-container hidden">
+  <div class="modal-bg fixed inset-0 bg-black opacity-50"></div>
+  <div class="modal-content bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 z-50 max-h-screen overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gray-800">订阅测试结果</h3>
+        <button class="text-gray-500 hover:text-gray-700 close-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div id="subscriptionTestContent" class="py-4"></div>
+      
+      <div class="flex justify-end">
+        <button class="btn btn-primary close-modal">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 通知 -->
+<div id="toast" style="display:none;position:fixed;top:2rem;right:2rem;z-index:9999;min-width:220px;max-width:90vw;"></div>
 {% endblock %}
 
 {% block script %}
@@ -628,77 +664,79 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // 测试通知功能
-  // document.getElementById('testNotificationBtn').addEventListener('click', async () => {
-  //   try {
-  //     // 显示加载状态
-  //     const button = document.getElementById('testNotificationBtn');
-  //     const originalContent = button.innerHTML;
-  //     button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>发送中...';
-  //     button.disabled = true;
-      
-  //     // 显示结果模态框并添加加载中提示
-  //     const notificationResultContent = document.getElementById('notificationResultContent');
-  //     notificationResultContent.innerHTML = `
-  //       <div class="text-center">
-  //         <div class="w-16 h-16 mx-auto mb-4 text-indigo-500">
-  //           <i class="fas fa-spinner fa-spin text-5xl"></i>
-  //         </div>
-  //         <h4 class="text-lg font-medium text-gray-800 mb-2">发送中...</h4>
-  //         <p class="text-gray-600">正在发送测试通知，请稍候...</p>
-  //       </div>
-  //     `;
-  //     document.getElementById('notificationResultModal').classList.remove('hidden');
-      
-  //     const response = await fetch('/api/test-notification', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json'
-  //       },
-  //       body: JSON.stringify({})
-  //     });
-      
-  //     const result = await response.json();
-      
-  //     // 显示结果
-  //     if (result.success) {
-  //       notificationResultContent.innerHTML = `
-  //         <div class="text-center">
-  //           <div class="w-16 h-16 mx-auto mb-4 text-green-500">
-  //             <i class="fas fa-check-circle text-5xl"></i>
-  //           </div>
-  //           <h4 class="text-lg font-medium text-gray-800 mb-2">测试成功</h4>
-  //           <p class="text-gray-600">通知已成功发送，请检查您的接收设备。</p>
-  //         </div>
-  //       `;
-  //     } else {
-  //       notificationResultContent.innerHTML = `
-  //         <div class="text-center">
-  //           <div class="w-16 h-16 mx-auto mb-4 text-red-500">
-  //             <i class="fas fa-times-circle text-5xl"></i>
-  //           </div>
-  //           <h4 class="text-lg font-medium text-gray-800 mb-2">测试失败</h4>
-  //           <p class="text-gray-600 mb-2">${result.message || '发送测试通知失败，请检查通知配置'}</p>
-  //         </div>
-  //       `;
-  //     }
-  //   } catch (error) {
-  //     console.error('测试通知失败:', error);
-  //     document.getElementById('notificationResultContent').innerHTML = `
-  //       <div class="text-center">
-  //         <div class="w-16 h-16 mx-auto mb-4 text-red-500">
-  //           <i class="fas fa-times-circle text-5xl"></i>
-  //         </div>
-  //         <h4 class="text-lg font-medium text-gray-800 mb-2">测试失败</h4>
-  //         <p class="text-gray-600 mb-2">发送测试通知时出现错误，请检查网络连接和通知配置</p>
-  //       </div>
-  //     `;
-  //   } finally {
-  //     // 恢复按钮状态
-  //     // const button = document.getElementById('testNotificationBtn');
-  //     // button.innerHTML = '<i class="fas fa-bell mr-2"></i>测试通知';
-  //     // button.disabled = false;
-  //   }
-  // });
+  // 订阅列表测试按钮的JS
+  document.querySelectorAll('.test-subscription').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      try {
+        const response = await fetch(`/api/test-subscription-notify/${id}`, { method: 'POST' });
+        const result = await response.json();
+        if (result.success) {
+          showToast('测试通知已成功发送', 'success');
+        } else {
+          showToast(result.message || '推送失败，请检查通知配置', 'error');
+        }
+      } catch (error) {
+        showToast('推送测试时出错', 'error');
+      }
+    });
+  });
+
+  // 动态设置测试按钮图标
+  fetch('/api/config').then(res => res.json()).then(config => {
+    let iconClass = 'fas fa-vial';
+    let iconColor = '';
+    if (config.NOTIFICATION_TYPE === 'telegram') {
+      iconClass = 'fab fa-telegram-plane';
+      iconColor = '#229ED9';
+    } else if (config.NOTIFICATION_TYPE === 'wecom') {
+      iconClass = 'fab fa-weixin';
+      iconColor = '#07C160';
+    } else if (config.NOTIFICATION_TYPE === 'notifyx') {
+      iconClass = 'fas fa-bell';
+      iconColor = '#FF9900';
+    }
+    document.querySelectorAll('.test-icon').forEach(el => {
+      el.className = 'test-icon ' + iconClass;
+      if (iconColor) {
+        el.style.setProperty('color', iconColor, 'important');
+      } else {
+        el.style.removeProperty('color');
+      }
+    });
+  });
+
+  // 停用/启用按钮事件
+  document.querySelectorAll('.toggle-status-subscription').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const status = btn.dataset.status;
+      const is_active = status === 'enable';
+      try {
+        const response = await fetch(`/api/subscriptions/${id}/toggle-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_active })
+        });
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          const data = await response.json();
+          alert(data.message || '操作失败');
+        }
+      } catch (error) {
+        alert('操作失败');
+      }
+    });
+  });
+
+  // Toast通知函数
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.innerHTML = `<div style="display:flex;align-items:center;gap:0.7em;padding:1em 1.5em;border-radius:0.8em;font-size:1.1em;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.08);background:${type==='success'?'#16ba91':'#f44336'};color:#fff;"><i class='fas fa-${type==='success'?'check-circle':'times-circle'}' style='font-size:1.3em;'></i> ${message}</div>`;
+    toast.style.display = 'block';
+    clearTimeout(window.toastTimer);
+    window.toastTimer = setTimeout(()=>{toast.style.display='none';}, 3000);
+  }
 });
 {% endblock %} 
