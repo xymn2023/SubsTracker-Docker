@@ -24,7 +24,7 @@ cd SubsTracker-Docker
 2. 使用docker-compose启动服务：
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 3. 访问系统：
