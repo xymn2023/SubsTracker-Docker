@@ -16,6 +16,6 @@ RUN npm install --build-from-source=sqlite3
 # 复制应用代码
 COPY . .
 
-EXPOSE 12121
+EXPOSE 3000
 
 CMD ["npm", "start"]

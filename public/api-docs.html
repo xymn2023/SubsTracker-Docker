@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="garden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业微信通知服务 - API文档</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.5.0/dist/full.css" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+        }
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bef264 100%);
+            min-height: 100vh;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-4xl glass-card p-8 my-8">
+        <header class="mb-8">
+            <div class="flex items-center justify-between">
+                <h1 class="text-3xl font-bold text-primary flex items-center gap-2">
+                    <i data-lucide="book-open" class="h-8 w-8"></i>
+                    企业微信通知服务 API文档
+                </h1>
+                <a href="/" class="btn btn-outline btn-sm">
+                    <i data-lucide="arrow-left" class="h-4 w-4 mr-1"></i>
+                    返回首页
+                </a>
+            </div>
+            <p class="text-base-content/70 mt-2">详细的API使用说明文档，帮助您快速集成企业微信消息推送功能</p>
+        </header>
+
+        <div class="space-y-8">
+            <!-- API概述 -->
+            <section>
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <i data-lucide="info" class="h-6 w-6"></i>
+                    API概述
+                </h2>
+                <div class="bg-base-100 p-6 rounded-lg shadow-sm">
+                    <p class="mb-4">企业微信通知服务提供了简单易用的HTTP API，用于向企业微信应用发送消息通知。通过配置您的企业微信应用信息，系统会生成一个唯一的API地址，您可以通过该地址发送消息。</p>
+                    <div class="alert alert-info">
+                        <i data-lucide="lightbulb" class="h-5 w-5"></i>
+                        <span>使用前，您需要先在首页创建配置并获取唯一的API地址。</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 认证与安全 -->
+            <section>
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <i data-lucide="shield" class="h-6 w-6"></i>
+                    认证与安全
+                </h2>
+                <div class="bg-base-100 p-6 rounded-lg shadow-sm">
+                    <p class="mb-4">API使用唯一的配置Code作为认证凭证，该Code包含在API URL中。请妥善保管您的配置Code，不要泄露给未授权的人员。</p>
+                    <div class="alert alert-warning">
+                        <i data-lucide="alert-triangle" class="h-5 w-5"></i>
+                        <span>配置Code仅在创建时显示一次，请务必保存。如果遗失，您需要重新创建配置。</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 发送消息API -->
+            <section>
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <i data-lucide="send" class="h-6 w-6"></i>
+                    发送消息API
+                </h2>
+                <div class="bg-base-100 p-6 rounded-lg shadow-sm space-y-6">
+                    <div>
+                        <h3 class="font-medium mb-2 text-lg">请求地址</h3>
+                        <div class="bg-base-200 p-3 rounded-md">
+                            <code class="text-sm">POST /api/notify/{your_code}</code>
+                        </div>
+                        <p class="text-sm text-base-content/70 mt-1">其中 {your_code} 是您创建配置时获得的唯一Code</p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-medium mb-2 text-lg">请求头</h3>
+                        <div class="bg-base-200 p-3 rounded-md">
+                            <code class="text-sm">Content-Type: application/json</code>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-medium mb-2 text-lg">请求参数</h3>
+                        <div class="overflow-x-auto">
+                            <table class="table table-zebra w-full">
+                                <thead>
+                                    <tr>
+                                        <th>参数名</th>
+                                        <th>类型</th>
+                                        <th>必填</th>
+                                        <th>说明</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="font-mono">title</td>
+                                        <td>String</td>
+                                        <td>否</td>
+                                        <td>消息标题，可选。如果提供，将作为消息的第一行显示，并会加粗处理。</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-mono">content</td>
+                                        <td>String</td>
+                                        <td>是</td>
+                                        <td>消息内容，必填。支持简单的markdown格式，如加粗、链接等。</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-medium mb-2 text-lg">请求示例</h3>
+                        <div class="bg-base-200 p-3 rounded-md">
+<pre class="text-sm">curl -X POST "http://your-server.com/api/notify/your-code-here" \
+-H "Content-Type: application/json" \
+-d '{
+  "title": "服务器告警",
+  "content": "CPU使用率超过90%，请及时处理！\n\n**详细信息**：\n- 服务器：web-server-01\n- 时间：2023-09-15 14:30:45\n- 当前负载：95%"
+}'</pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-medium mb-2 text-lg">返回示例</h3>
+                        <div class="bg-base-200 p-3 rounded-md">
+<pre class="text-sm">{
+  "message": "发送成功",
+  "response": {
+    "errcode": 0,
+    "errmsg": "ok",
+    "msgid": "MSGID1234567890"
+  }
+}</pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-medium mb-2 text-lg">错误码说明</h3>
+                        <div class="overflow-x-auto">
+                            <table class="table table-zebra w-full">
+                                <thead>
+                                    <tr>
+                                        <th>HTTP状态码</th>
+                                        <th>说明</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>200</td>
+                                        <td>请求成功</td>
+                                    </tr>
+                                    <tr>
+                                        <td>400</td>
+                                        <td>参数错误，如缺少必填参数</td>
+                                    </tr>
+                                    <tr>
+                                        <td>404</td>
+                                        <td>配置不存在，请检查Code是否正确</td>
+                                    </tr>
+                                    <tr>
+                                        <td>500</td>
+                                        <td>服务器内部错误或企业微信API调用失败</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 集成示例 -->
+            <section>
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <i data-lucide="code" class="h-6 w-6"></i>
+                    集成示例
+                </h2>
+                <div class="bg-base-100 p-6 rounded-lg shadow-sm space-y-6">
+                    <div>
+                        <h3 class="font-medium mb-2 text-lg">Shell脚本示例</h3>
+                        <div class="bg-base-200 p-3 rounded-md">
+<pre class="text-sm">#!/bin/bash
+
+# 监控服务器CPU使用率并发送告警
+CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
+THRESHOLD=90
+
+if (( $(echo "$CPU_USAGE > $THRESHOLD" | bc -l) )); then
+  curl -X POST "http://your-server.com/api/notify/your-code-here" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"title\": \"CPU告警\",
+    \"content\": \"服务器CPU使用率: ${CPU_USAGE}%，超过阈值${THRESHOLD}%\"
+  }"
+fi</pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-medium mb-2 text-lg">Python示例</h3>
+                        <div class="bg-base-200 p-3 rounded-md">
+<pre class="text-sm">import requests
+import json
+
+def send_notification(title, content):
+    url = "http://your-server.com/api/notify/your-code-here"
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "title": title,
+        "content": content
+    }
+    
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    return response.json()
+
+# 使用示例
+result = send_notification(
+    "数据库备份完成", 
+    "数据库备份已完成\n- 数据库：user_db\n- 备份大小：1.2GB\n- 备份时间：2023-09-15 02:00:00"
+)
+print(result)</pre>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-medium mb-2 text-lg">Node.js示例</h3>
+                        <div class="bg-base-200 p-3 rounded-md">
+<pre class="text-sm">const axios = require('axios');
+
+async function sendNotification(title, content) {
+  try {
+    const response = await axios.post('http://your-server.com/api/notify/your-code-here', {
+      title,
+      content
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('发送通知失败:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+}
+
+// 使用示例
+sendNotification('部署完成', '项目已成功部署到生产环境\n\n版本: v1.2.3\n部署时间: 2023-09-15 15:30:00')
+  .then(result => console.log('通知发送成功:', result))
+  .catch(err => console.error('通知发送失败:', err));</pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 常见问题 -->
+            <section>
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <i data-lucide="help-circle" class="h-6 w-6"></i>
+                    常见问题
+                </h2>
+                <div class="bg-base-100 p-6 rounded-lg shadow-sm">
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-medium">Q: 如何获取配置Code？</h3>
+                            <p>A: 在首页填写您的企业微信应用信息，验证并选择接收成员后，点击"生成通知API"按钮即可获取配置Code。</p>
+                        </div>
+                        <div>
+                            <h3 class="font-medium">Q: 消息发送失败怎么办？</h3>
+                            <p>A: 请检查以下几点：</p>
+                            <ul class="list-disc pl-5 mt-2">
+                                <li>配置Code是否正确</li>
+                                <li>请求参数格式是否正确</li>
+                                <li>企业微信应用的配置是否有效</li>
+                                <li>网络连接是否正常</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="font-medium">Q: 是否支持发送图片或文件？</h3>
+                            <p>A: 目前仅支持发送文本消息，不支持图片或文件附件。</p>
+                        </div>
+                        <div>
+                            <h3 class="font-medium">Q: 消息内容有长度限制吗？</h3>
+                            <p>A: 根据企业微信API的限制，消息内容不应超过2048个字符。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <footer class="text-center text-sm text-base-content/60 mb-4">
+        <p class="flex items-center justify-center gap-1">
+            <i data-lucide="external-link" class="h-4 w-4"></i>
+            <a href="https://www.wangwangit.com/" target="_blank" class="hover:text-primary transition-colors">一只会飞的旺旺</a>
+        </p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

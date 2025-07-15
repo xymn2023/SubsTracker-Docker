@@ -1,28 +1,17 @@
 version: '3'
 
 services:
-  substracker:
-    image: smhw3565/substracker:sub
-    container_name: substracker
-    restart: always
+  wechat-notifier:
+    container_name: tttt
+    image: wangwangit/wangwangit:qywx
+    restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "12122:12121"
     volumes:
-      - ./data:/app/data
+      - ./1:/app/database
     environment:
-      - TZ=Asia/Shanghai
-      - SECRET_KEY=your-secret-key-change-this
-      - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=password
-      # 通知方式: telegram, wecom, notifyx
-      - NOTIFICATION_TYPE=telegram
-      # Telegram配置
-      - TG_BOT_TOKEN=
-      - TG_CHAT_ID=
-      # 企业微信配置
-      - WECOM_CORP_ID=
-      - WECOM_AGENT_ID=
-      - WECOM_CORP_SECRET=
-      # NotifyX配置
-      - NOTIFYX_API_KEY=
-    command: gunicorn --bind 0.0.0.0:5000 run:app 
+      - PORT=12121
+      - DB_PATH=/app/database/notifier.db
+      - ENCRYPTION_KEY=change-this-to-a-random-32-character-string
+      - NODE_ENV=production
+      - WECHAT_API_BASE=https://qyapi.weixin.qq.com

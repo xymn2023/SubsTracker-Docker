@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="garden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业微信通知服务</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.5.0/dist/full.css" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+        }
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bef264 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-2xl glass-card p-8 my-8">
+        <header class="mb-8">
+            <div class="flex items-center justify-between">
+                <h1 class="text-3xl font-bold text-primary flex items-center gap-2">
+                    <i data-lucide="bell-ring" class="h-8 w-8"></i>
+                    企业微信通知服务
+                </h1>
+                <a href="/public/api-docs.html" class="btn btn-sm btn-outline btn-primary gap-1">
+                    <i data-lucide="book-open" class="h-4 w-4"></i>
+                    API文档
+                </a>
+            </div>
+            <div class="mt-2">
+                <p class="text-base-content/70">轻量级企业微信消息推送服务，一次配置，随时调用</p>
+            </div>
+        </header>
+
+        <!-- 第一步：生成回调URL -->
+        <div id="step1-container">
+            <div class="divider">第一步：生成回调URL（必须先完成）</div>
+            <div class="alert alert-warning mb-4">
+                <i data-lucide="alert-triangle" class="h-5 w-5"></i>
+                <div>
+                    <div class="font-medium">重要提示</div>
+                    <div class="text-sm">必须先生成回调URL并在企业微信后台配置，然后配置IP白名单，最后才能获取成员列表</div>
+                </div>
+            </div>
+
+            <form id="callbackForm" class="space-y-4">
+                <div class="form-control">
+                    <label class="label font-medium">CorpID</label>
+                    <input type="text" name="corpid" class="input input-bordered w-full" required placeholder="请输入企业微信CorpID">
+                </div>
+                <div class="form-control">
+                    <label class="label font-medium">回调Token</label>
+                    <input type="text" name="callback_token" class="input input-bordered w-full" placeholder="请输入回调验证Token" required>
+                    <div class="label">
+                        <span class="label-text-alt text-base-content/60">用于验证回调请求的Token</span>
+                    </div>
+                </div>
+                <div class="form-control">
+                    <label class="label font-medium">EncodingAESKey</label>
+                    <input type="text" name="encoding_aes_key" class="input input-bordered w-full" placeholder="请输入43位EncodingAESKey" required>
+                    <div class="label">
+                        <span class="label-text-alt text-base-content/60">用于消息加解密的AES密钥</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full flex gap-2 items-center">
+                    <i data-lucide="link" class="w-5 h-5"></i> 生成回调URL
+                </button>
+            </form>
+
+            <div id="callbackResult" class="hidden mt-4"></div>
+        </div>
+
+        <!-- 第二步：完善配置 -->
+        <div id="step2-container" class="hidden">
+            <div class="divider">第二步：完善配置（配置IP白名单后）</div>
+            <div class="alert alert-info mb-4">
+                <i data-lucide="info" class="h-5 w-5"></i>
+                <span>请先在企业微信后台配置回调URL和IP白名单，然后点击下方按钮获取成员列表</span>
+            </div>
+
+            <form id="configForm" class="space-y-4">
+                <div class="form-control">
+                    <label class="label font-medium">CorpSecret</label>
+                    <input type="password" name="corpsecret" class="input input-bordered w-full" required placeholder="请输入CorpSecret">
+                </div>
+                <div class="form-control">
+                    <label class="label font-medium">AgentID</label>
+                    <input type="number" name="agentid" class="input input-bordered w-full" required placeholder="请输入AgentID">
+                </div>
+                <div>
+                    <button type="button" id="validateBtn" class="btn btn-outline w-full flex gap-2 items-center">
+                        <i data-lucide="users" class="w-5 h-5"></i> 验证并获取成员列表
+                    </button>
+                </div>
+                <div id="userListSection" class="hidden">
+                    <label class="block font-medium mb-1">选择接收成员</label>
+                    <div id="userList" class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-base-100 rounded-lg p-2 border border-base-200"></div>
+                </div>
+                <div class="form-control">
+                    <label class="label font-medium">配置描述（可选）</label>
+                    <input type="text" name="description" class="input input-bordered w-full" placeholder="如：服务器告警推送">
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-full font-bold flex gap-2 items-center">
+                    <i data-lucide="check" class="w-5 h-5"></i> 完成配置
+                </button>
+            </form>
+        </div>
+
+        <!-- 查找配置区域 -->
+        <div class="divider">查找已有配置</div>
+        <div id="lookup-section">
+            <form id="lookupForm" class="space-y-4">
+                <div class="form-control">
+                    <label class="label font-medium">配置Code</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="code" class="input input-bordered flex-1" required placeholder="请输入配置Code">
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="search" class="h-5 w-5"></i>
+                            查找
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <div id="lookup-result" class="mt-4"></div>
+        </div>
+
+        <div id="result" class="mt-8"></div>
+    </div>
+
+    <!-- 提示弹窗 -->
+    <div id="save-alert" class="toast toast-top toast-center hidden">
+        <div class="alert alert-warning">
+            <i data-lucide="alert-triangle" class="h-6 w-6"></i>
+            <span>请注意：Code生成后，您只有一次机会保存！</span>
+        </div>
+    </div>
+
+    <footer class="text-center text-sm text-base-content/60 mb-4">
+        <p class="flex items-center justify-center gap-1">
+            <i data-lucide="external-link" class="h-4 w-4"></i>
+            <a href="https://www.wangwangit.com/" target="_blank" class="hover:text-primary transition-colors">一只会飞的旺旺</a>
+        </p>
+    </footer>
+
+    <script src="/public/script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
