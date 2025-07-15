@@ -52,7 +52,6 @@ environment:
 http://your-server-ip:12121
 ```
 
-[旧仓库](https://github.com/xymn2023/SubsTracker)
 ## 数据持久化
 
 应用数据存储在 `./database` 目录中，该目录已通过 Docker 卷映射到容器内部。备份数据时，只需复制此目录即可。
