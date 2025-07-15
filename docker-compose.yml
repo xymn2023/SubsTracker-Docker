@@ -1,9 +1,9 @@
 version: '3'
 
 services:
-  wechat-notifier:
-    container_name: tttt
-    image: wangwangit/wangwangit:qywx
+  substracker:
+    container_name: substracker
+    image: smhw3565/substracker:latest
     restart: unless-stopped
     ports:
       - "12122:12121"
